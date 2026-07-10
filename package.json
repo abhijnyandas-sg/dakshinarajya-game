@@ -1,0 +1,23 @@
+{
+  "name": "dakshina-rajya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dakshina Rajya — a multiplayer turn-based strategy board game of the 5th-century South Indian kingdoms.",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace @dakshina/shared",
+    "dev:shared": "npm run dev --workspace @dakshina/shared",
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "dev": "npm run build:shared && concurrently -n shared,server,client -c magenta,cyan,green \"npm:dev:shared\" \"npm:dev:server\" \"npm:dev:client\"",
+    "build": "npm run build:shared && npm run build --workspace server && npm run build --workspace client",
+    "start": "npm run start --workspace server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
