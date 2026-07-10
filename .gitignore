@@ -5,4 +5,4 @@ build/
 .env.local
 .DS_Store
 client/public/assets/brain/
-*.commandcode/
+.commandcode/
