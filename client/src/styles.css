@@ -838,3 +838,693 @@ body { margin: 0; overflow: hidden; }
 .htp-nav { display: flex; align-items: center; justify-content: space-between; }
 .htp-counter { font-family: 'Marcellus'; font-size: 13px; color: var(--inkPale); }
 .htp-prev, .htp-next { min-width: 90px; }
+
+/* ================================================================
+   TILE ART — SVG Illustrations (Phase 2 addition)
+   ================================================================ */
+
+/* Wrapper for the SVG art inside each tile body */
+.dr-tile-art-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1.2;
+  min-height: 0;
+  width: 100%;
+  padding: 1px;
+}
+
+/* SVG illustrations scale to fill their container */
+.tile-svg-art {
+  width: 100%;
+  height: 100%;
+  max-width: 48px;
+  max-height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.15));
+}
+
+/* Corner tiles get larger art */
+.dr-tile.corner .tile-svg-art {
+  max-width: 56px;
+  max-height: 44px;
+}
+
+/* ── Upgraded tile hover & selection effects ─────────────── */
+.dr-tile {
+  transition: outline .1s, transform .12s ease, box-shadow .12s ease, z-index 0s;
+}
+.dr-tile:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  z-index: 10;
+}
+.dr-tile.sel {
+  box-shadow: 0 0 0 2px var(--sindoor), 0 4px 16px rgba(158,42,47,.3);
+  z-index: 11;
+}
+
+/* Ownership gem — pulsing dot at top-right corner */
+.dr-own-flag {
+  animation: ownerPulse 2.5s infinite ease-in-out;
+}
+@keyframes ownerPulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.6; }
+}
+
+/* ── Center mandala ring (rotating dashed circle) ────────── */
+.dr-center-mandala {
+  position: absolute;
+  inset: 8%;
+  border: 1.5px dashed rgba(217, 172, 76, 0.18);
+  border-radius: 50%;
+  animation: mandalaSpin 90s infinite linear;
+  pointer-events: none;
+}
+@keyframes mandalaSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Tile body layout adjustment for art + text ──────────── */
+.dr-body {
+  gap: 0;
+}
+
+/* ── Premium board border glow ───────────────────────────── */
+.dr-board {
+  border: 1.5px solid var(--gold);
+}
+
+/* ================================================================
+   TILE DETAIL CARD POPUP
+   ================================================================ */
+.tdc-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(10,6,0,.82);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+  animation: tdcFadeIn .2s ease;
+}
+@keyframes tdcFadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+
+.tdc-card {
+  background: var(--paper);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  box-shadow: 0 0 0 4px rgba(184,137,60,.12), 0 24px 60px rgba(0,0,0,.8);
+  width: min(380px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: tdcSlideUp .25s cubic-bezier(.4,0,.2,1);
+}
+@keyframes tdcSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tdc-band {
+  height: 8px;
+  border-radius: 14px 14px 0 0;
+}
+
+.tdc-type-badge {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-family: 'Marcellus';
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  background: var(--paperDeep);
+  color: var(--inkSoft);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--paperDark);
+}
+
+.tdc-art {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3a2a16, #2a1c0e);
+  border-bottom: 1px solid var(--paperDark);
+}
+.tdc-art .tile-svg-art {
+  max-width: 100px;
+  max-height: 100px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
+}
+
+.tdc-title {
+  font-family: 'Marcellus';
+  font-size: 22px;
+  color: var(--ink);
+  text-align: center;
+  margin: 16px 16px 0;
+  letter-spacing: .04em;
+}
+
+.tdc-naadu {
+  font-family: 'Marcellus';
+  font-size: 10px;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--inkPale);
+  text-align: center;
+  margin-top: 2px;
+}
+
+.tdc-flavor {
+  margin: 14px 18px 0;
+  padding: 12px 14px;
+  background: var(--paperLight);
+  border: 1px solid var(--paperDark);
+  border-radius: 8px;
+}
+.tdc-flavor-text {
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--inkSoft);
+  margin: 0 0 8px;
+}
+.tdc-mechanical {
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--paperDark);
+}
+
+.tdc-stats {
+  display: flex;
+  gap: 10px;
+  margin: 14px 18px 0;
+}
+.tdc-stat {
+  flex: 1;
+  background: linear-gradient(180deg, #281c08, #1e1206);
+  border: 1px solid var(--goldDeep);
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+}
+.tdc-stat-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--inkPale);
+  margin-bottom: 2px;
+}
+.tdc-stat-value {
+  font-family: 'Marcellus';
+  font-size: 18px;
+  color: var(--goldBright);
+}
+.tdc-stat-value.tdc-neg { color: var(--sindoor); }
+
+.tdc-owner {
+  font-family: 'Marcellus';
+  font-size: 13px;
+  color: var(--emerald);
+  text-align: center;
+  margin: 12px 18px 0;
+}
+.tdc-unclaimed {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--inkPale);
+  text-align: center;
+  margin: 10px 18px 0;
+}
+.tdc-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--inkSoft);
+  margin: 10px 18px 0;
+  font-style: italic;
+}
+
+.tdc-close {
+  position: absolute;
+  top: 12px; left: 12px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--paperDark);
+  background: var(--paperLight);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--inkSoft);
+  display: grid; place-items: center;
+  transition: background .15s;
+}
+.tdc-close:hover { background: var(--paperDeep); }
+
+/* Bottom padding in card */
+.tdc-card::after {
+  content: '';
+  display: block;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   DICE ROLLER ENHANCEMENTS
+   ================================================================ */
+
+/* Rolling label animation */
+.dr-dice-rolling-label {
+  font-family: 'Marcellus';
+  font-size: 14px;
+  color: var(--goldBright);
+  text-align: center;
+  animation: rollingBounce 0.6s ease infinite;
+}
+@keyframes rollingBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Die faces get a shake during roll */
+.dr-die-rolling {
+  animation: dieShake .08s ease-in-out infinite;
+}
+@keyframes dieShake {
+  0%   { transform: rotate(-12deg) scale(0.92); }
+  25%  { transform: rotate(10deg) scale(1.08); }
+  50%  { transform: rotate(-8deg) scale(0.95); }
+  75%  { transform: rotate(12deg) scale(1.06); }
+  100% { transform: rotate(-12deg) scale(0.92); }
+}
+
+/* Die settle with bounce */
+.dr-die-settled {
+  animation: dieSettleBounce .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes dieSettleBounce {
+  0%   { transform: scale(1.2) rotate(6deg); }
+  50%  { transform: scale(0.92) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* Die face premium shadow */
+.dr-die-face {
+  box-shadow: 0 6px 16px rgba(0,0,0,.55), 0 2px 4px rgba(0,0,0,.3);
+}
+
+/* ================================================================
+   ENTRY SCREEN & MENU ENHANCEMENTS
+   ================================================================ */
+
+/* Logo area shimmer */
+.dr-entry-logo {
+  position: relative;
+  padding-bottom: 8px;
+}
+.dr-entry-logo::after {
+  content: '';
+  display: block;
+  width: 60%;
+  height: 1px;
+  margin: 12px auto 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* Title text shadow */
+.dr-title {
+  text-shadow: 0 1px 2px rgba(0,0,0,.1);
+}
+
+/* Input focus glow */
+.dr-input:focus {
+  box-shadow: 0 0 0 3px rgba(184,137,60,.2);
+}
+
+/* Button hover polish */
+.dr-btn:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--gold), 0 4px 12px rgba(0,0,0,.2);
+}
+.dr-btn.primary:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--goldDeep), 0 4px 12px rgba(158,42,47,.3);
+}
+
+/* Room code display improvement */
+.dr-code {
+  background: rgba(158,42,47,.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(158,42,47,.2);
+}
+
+/* Seat cards in lobby — more polished */
+.dr-seat-card {
+  transition: transform .15s ease, box-shadow .15s;
+}
+.dr-seat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+/* Bot button pulse animation */
+.dr-bot-btn:not(:disabled) {
+  animation: botBtnPulse 3s ease infinite;
+}
+@keyframes botBtnPulse {
+  0%, 100% { box-shadow: 0 0 0 1px #2a6a2a !important; }
+  50% { box-shadow: 0 0 0 1px #2a6a2a, 0 0 8px rgba(42,106,42,.3) !important; }
+}
+
+/* ── Board tile parchment texture ────────────────────────── */
+.dr-tile {
+  background-image:
+    repeating-linear-gradient(
+      0deg, transparent, transparent 3px, rgba(0,0,0,.02) 3px, rgba(0,0,0,.02) 4px
+    ),
+    radial-gradient(100% 100% at 50% 50%, var(--paperLight) 0%, var(--paper) 100%);
+}
+.dr-tile.sp {
+  background-image:
+    repeating-linear-gradient(
+      0deg, transparent, transparent 3px, rgba(0,0,0,.02) 3px, rgba(0,0,0,.02) 4px
+    ),
+    radial-gradient(100% 100% at 50% 50%, var(--paperDeep) 0%, var(--paper) 100%);
+}
+.dr-tile.corner {
+  background-image:
+    radial-gradient(100% 100% at 50% 50%, var(--paperLight) 0%, var(--paperDeep) 100%);
+}
+
+/* ── Sidebar polish ──────────────────────────────────────── */
+.dr-panel-header {
+  border-bottom: 1px solid rgba(123,92,16,.15);
+}
+.dr-panel-body {
+  border-top: 1px solid rgba(123,92,16,.08);
+}
+
+/* HUD Rani display */
+.dr-hud-rani {
+  background: radial-gradient(circle at 50% 0%, rgba(217,172,76,.06) 0%, rgba(0,0,0,0) 80%);
+  border: 1px solid rgba(123,92,16,.2);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+/* ================================================================
+   PHASE 1: INTRO SLIDESHOW
+   ================================================================ */
+
+.dr-intro-slideshow {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  color: var(--gold);
+  overflow: hidden;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.dr-intro-slideshow.dr-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dr-intro-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, #2a1005 0%, #0a0301 80%);
+  animation: pulseBg 8s infinite alternate;
+  z-index: 0;
+}
+
+@keyframes pulseBg {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+.dr-intro-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 800px;
+  padding: 40px;
+  animation: slideUpFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+  0% { transform: translateY(60px); opacity: 0; filter: blur(8px); }
+  100% { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+
+.dr-intro-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--goldDeep), var(--gold));
+  color: #1a0a03;
+  font-family: 'Marcellus', serif;
+  font-size: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  box-shadow: 0 0 40px rgba(217,172,76, 0.4);
+  border: 4px solid var(--paperLight);
+}
+
+.dr-intro-player-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--inkPale);
+  margin-bottom: 8px;
+}
+
+.dr-intro-rani-name {
+  font-family: 'Marcellus', serif;
+  font-size: 64px;
+  color: var(--goldLight);
+  text-shadow: 0 4px 20px rgba(217,172,76, 0.5);
+  margin-bottom: 32px;
+}
+
+.dr-intro-roleplay {
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.6;
+  color: var(--paperLight);
+  margin-bottom: 40px;
+  padding: 0 20px;
+  border-left: 2px solid var(--gold);
+  border-right: 2px solid var(--gold);
+}
+
+.dr-intro-stats {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: var(--inkSoft);
+  background: rgba(217,172,76, 0.1);
+  padding: 16px 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(217,172,76, 0.3);
+  line-height: 1.8;
+}
+
+.dr-intro-progress {
+  position: absolute;
+  bottom: 80px;
+  display: flex;
+  gap: 16px;
+  z-index: 1;
+}
+
+.dr-intro-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(217,172,76, 0.2);
+  transition: all 0.4s ease;
+}
+
+.dr-intro-dot.active {
+  background: var(--gold);
+  transform: scale(1.5);
+  box-shadow: 0 0 10px var(--gold);
+}
+
+.dr-intro-dot.done {
+  background: rgba(217,172,76, 0.6);
+}
+
+.dr-intro-skip {
+  position: absolute;
+  bottom: 30px;
+  right: 40px;
+  background: none;
+  border: none;
+  color: var(--inkSoft);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.2s;
+}
+
+.dr-intro-skip:hover {
+  color: var(--gold);
+}
+
+/* ================================================================
+   PHASE 2: SMOOTH BOARD ANIMATIONS
+   ================================================================ */
+
+.dr-player-piece {
+  transition: top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 10;
+}
+
+/* Pulse glow for active player piece */
+@keyframes piecePulse {
+  0% { box-shadow: 0 4px 8px rgba(0,0,0,0.3), 0 0 0 0 rgba(217,172,76, 0.6); }
+  70% { box-shadow: 0 4px 8px rgba(0,0,0,0.3), 0 0 0 12px rgba(217,172,76, 0); }
+  100% { box-shadow: 0 4px 8px rgba(0,0,0,0.3), 0 0 0 0 rgba(217,172,76, 0); }
+}
+
+.dr-player-piece.dr-my-piece {
+  /* Just a marker if needed */
+}
+
+/* We could apply this glow if we wanted to mark active turns on the board,
+   but we need to know who is active. We can do that by adding a class in Board.tsx. */
+
+/* ================================================================
+   PHASE 3: ACTION INDICATORS / DYNAMIC TOASTS
+   ================================================================ */
+
+.dr-event-toasts {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.dr-toast-item {
+  background: rgba(20, 10, 5, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--paperLight);
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 0 1px rgba(217,172,76,0.2);
+  animation: toastEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1), toastExit 0.4s ease-in 3.1s forwards;
+}
+
+.dr-toast-item.dr-toast-pos {
+  border: 1px solid rgba(46, 107, 69, 0.6);
+  color: #a3e6b7;
+  text-shadow: 0 0 8px rgba(46, 107, 69, 0.8);
+}
+
+.dr-toast-item.dr-toast-neg {
+  border: 1px solid rgba(158, 42, 47, 0.6);
+  color: #f7a8a8;
+  text-shadow: 0 0 8px rgba(158, 42, 47, 0.8);
+}
+
+@keyframes toastEnter {
+  0% { transform: translateY(-40px); opacity: 0; filter: blur(4px); }
+  100% { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+
+@keyframes toastExit {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-20px) scale(0.9); opacity: 0; }
+}
+
+/* ================================================================
+   PHASE 4: PREMIUM CARD OVERHAUL
+   ================================================================ */
+
+/* We'll upgrade the .tdc-overlay and .tdc-card classes */
+
+.tdc-overlay {
+  /* Give it a richer, darker blurred backdrop */
+  background: rgba(10, 5, 2, 0.7);
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.tdc-card {
+  /* Richer shadows, animated entry */
+  box-shadow: 0 24px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(217,172,76, 0.3), 0 0 20px rgba(217,172,76, 0.1);
+  animation: cardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes cardPop {
+  0% { transform: scale(0.95) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.tdc-band {
+  /* Shimmer effect for the top band */
+  position: relative;
+  overflow: hidden;
+}
+
+.tdc-band::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmerBand 3s infinite;
+}
+
+@keyframes shimmerBand {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.cr-card {
+  /* Premium reveal cards */
+  background: radial-gradient(circle at top right, var(--paperLight) 0%, var(--paper) 100%);
+  box-shadow: 0 32px 64px -16px rgba(0,0,0,0.7), 0 0 0 2px var(--goldDeep), 0 0 40px rgba(217,172,76,0.3);
+  animation: cardPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+

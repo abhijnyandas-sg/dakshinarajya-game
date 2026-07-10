@@ -25,6 +25,8 @@ import {
   FrontierMode,
   GameState,
   CardRevealPayload,
+  exploreCity,
+  resolveEvent,
 } from "@dakshina/shared";
 
 interface SockData {
@@ -44,7 +46,23 @@ const BOT_NAMES = [
 export class GameGateway implements OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
 
+  // Rate limiting: IP -> { count, resetAt }
+  private rateLimits = new Map<string, { count: number; resetAt: number }>();
+
   constructor(private readonly rooms: RoomStore) {}
+
+  // Basic token-bucket style rate limiter per connection IP
+  private isRateLimited(client: Socket, maxHits = 10, windowMs = 5000): boolean {
+    const ip = client.handshake.address;
+    const now = Date.now();
+    let record = this.rateLimits.get(ip);
+    if (!record || now > record.resetAt) {
+      record = { count: 0, resetAt: now + windowMs };
+    }
+    record.count++;
+    this.rateLimits.set(ip, record);
+    return record.count > maxHits;
+  }
 
   private data(client: Socket): SockData {
     return client.data as SockData;
@@ -102,7 +120,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   /** Run bot turns in sequence after a human or bot ends their turn */
-  private runBotTurns(code: string) {
+  private async runBotTurns(code: string) {
     const state = this.rooms.get(code);
     if (!state || state.phase !== "playing") return;
 
@@ -112,17 +130,32 @@ export class GameGateway implements OnGatewayDisconnect {
       const p = currentPlayer(state);
       if (!p || !p.isBot) break;
 
-      // Capture space before bot rolls to detect special card landings
-      const prevPos = p.pos;
+      // 1. Tell client the bot is rolling
+      state.botIsRolling = true;
+      this.broadcast(code);
 
-      const played = botPlayTurn(state);
+      // 2. Wait 2 seconds for client animation
+      await new Promise((r) => setTimeout(r, 2000));
+
+      // 3. Ensure the room hasn't been closed or state changed drastically during the wait
+      const currentState = this.rooms.get(code);
+      if (!currentState || currentState.phase !== "playing") break;
+      const currentP = currentPlayer(currentState);
+      if (!currentP || currentP.id !== p.id) break;
+
+      currentState.botIsRolling = false;
+
+      // Capture space before bot rolls to detect special card landings
+      const prevPos = currentP.pos;
+
+      const played = botPlayTurn(currentState);
       if (!played) break;
 
       // Check if bot landed on a special space and emit card reveal
-      const sp = SPACES[p.pos];
+      const sp = SPACES[currentP.pos];
       if (sp && ["festival", "yagna", "planet", "weapon"].includes(sp.t)) {
-        const lastLog = state.log[state.log.length - 2]?.text ?? "";
-        const payload = this.buildCardPayload(state, p.name, sp.name, sp.t, lastLog);
+        const lastLog = currentState.log[currentState.log.length - 2]?.text ?? "";
+        const payload = this.buildCardPayload(currentState, currentP.name, sp.name, sp.t, lastLog);
         if (payload) {
           this.broadcastCardReveal(code, payload);
         }
@@ -142,6 +175,10 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { name: string }
   ) {
+    if (this.isRateLimited(client, 5, 10000)) {
+      this.error(client, "Too many requests. Please wait.");
+      return { error: "Too many requests." };
+    }
     const name = typeof body?.name === "string" ? body.name.trim() : "";
     const { state, playerId } = this.rooms.create(name || "Host");
     const d = this.data(client);
@@ -157,6 +194,10 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { code: string; name: string }
   ) {
+    if (this.isRateLimited(client, 10, 10000)) {
+      this.error(client, "Too many requests. Please wait.");
+      return { error: "Too many requests." };
+    }
     const code = typeof body?.code === "string" ? body.code : "";
     const name = typeof body?.name === "string" ? body.name.trim() : "";
     const res = this.rooms.join(code, name || "Rani");
@@ -337,6 +378,26 @@ export class GameGateway implements OnGatewayDisconnect {
     this.withRoom(client, (state, pid) =>
       frontier(state, pid, mode, villageId, astras)
     );
+  }
+
+  @SubscribeMessage("exploreCity")
+  onExplore(@ConnectedSocket() client: Socket) {
+    this.withRoom(client, (state, pid) => exploreCity(state, pid));
+  }
+
+  @SubscribeMessage("resolveEvent")
+  onResolveEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { choiceIndex: number }
+  ) {
+    const choiceIndex = typeof body?.choiceIndex === "number" ? body.choiceIndex : -1;
+    if (choiceIndex < 0) {
+      this.error(client, "Invalid choice.");
+      return;
+    }
+    this.withRoom(client, (state, pid) => resolveEvent(state, pid, choiceIndex));
+    // If the event resolved and it was the end of turn logic (though the player can still buy the city or end turn),
+    // they manually end the turn via the "End Turn" button afterwards.
   }
 
   @SubscribeMessage("useDecree")

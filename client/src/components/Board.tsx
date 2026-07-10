@@ -7,19 +7,7 @@ import {
   RANI_BY_ID,
   type GameState,
 } from "@dakshina/shared";
-
-const GLYPH: Record<string, string> = {
-  festival: "✿",
-  yagna: "🔥",
-  planet: "☿",
-  weapon: "⚔",
-  tax: "⚖",
-  route: "⛬",
-  court: "♛",
-  exile: "🌲",
-  lotus: "☸",
-  banish: "⚑",
-};
+import { TileArt } from "./TileArt";
 
 function playerColor(state: GameState, pid: string): string {
   const p = state.players.find((q) => q.id === pid);
@@ -78,17 +66,12 @@ export function Board({
               />
             )}
             <span className="dr-body">
-              {isProp ? (
-                <>
-                  <span className="dr-nm">{s.name}</span>
-                  <span className="dr-pr">₹{s.price}</span>
-                </>
-              ) : (
-                <>
-                  <span className="dr-glyph">{GLYPH[s.sub || s.t] || "•"}</span>
-                  <span className="dr-nm">{s.name}</span>
-                </>
-              )}
+              {/* SVG illustration replaces old emoji glyphs */}
+              <span className="dr-tile-art-wrap">
+                <TileArt type={s.t} sub={s.sub} name={s.name} />
+              </span>
+              <span className="dr-nm">{s.name}</span>
+              {isProp && <span className="dr-pr">₹{s.price}</span>}
             </span>
             {/* Player tokens — prominently sized */}
             {here.length > 0 && (
@@ -122,6 +105,7 @@ export function Board({
       })}
       <div className="dr-center">
         <div className="dr-center-seal" />
+        <div className="dr-center-mandala" />
         <h2>
           Dakshina
           <br />

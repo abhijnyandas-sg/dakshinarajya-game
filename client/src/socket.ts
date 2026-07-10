@@ -96,6 +96,12 @@ export const api = {
   addBot() {
     socket.emit("addBot");
   },
+  exploreCity() {
+    socket.emit("exploreCity");
+  },
+  resolveEvent(choiceIndex: number) {
+    socket.emit("resolveEvent", { choiceIndex });
+  },
 };
 
 export type { GameState };

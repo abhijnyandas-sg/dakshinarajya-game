@@ -9,6 +9,7 @@ import { GameState, Player, FrontierMode, RewardEffect } from "./types";
 import { SPACES, BOARD_SIZE } from "./data/board";
 import { RANI_BY_ID } from "./data/ranis";
 import { PALEGADU_BY_ID } from "./data/palegallu";
+import { EVENTS } from "./data/events";
 
 export const START_GOLD = 1500;
 export const PASS_COURT_GOLD = 200;
@@ -18,8 +19,12 @@ export const DEFAULT_GOLD_GOAL = 6000; // economic victory
 
 let _seq = 0;
 function uid(prefix: string): string {
+  // Try to use secure crypto if available, fallback to random string
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `${prefix}_${crypto.randomUUID()}`;
+  }
   _seq += 1;
-  return `${prefix}_${Date.now().toString(36)}${_seq.toString(36)}`;
+  return `${prefix}_${Date.now().toString(36)}${_seq.toString(36)}_${Math.random().toString(36).substring(2)}`;
 }
 
 function d6(): number {
@@ -135,6 +140,8 @@ export function createGame(code: string, hostId: string, hostName: string): Game
     dice: [1, 1],
     rolledThisTurn: false,
     frontierUsed: false,
+    cityExplored: false,
+    activeEvent: null,
     villages: {},
     log: [],
     winnerId: null,
@@ -347,6 +354,8 @@ export function roll(s: GameState, playerId: string): boolean {
   const passedCourt = before + steps >= BOARD_SIZE && after !== 0;
   p.pos = after;
   s.rolledThisTurn = true;
+  s.frontierUsed = false;
+  s.cityExplored = false;
   s.step = "action";
   log(s, `${p.name} rolls ${a} + ${b} = ${steps}.`);
   resolveLanding(s, p, passedCourt || after === 0);
@@ -378,8 +387,58 @@ function applyPerTurnIncome(s: GameState, p: Player): void {
     parts.push(`+${amount} ${res}`);
   }
   if (parts.length > 0) {
-    log(s, `${p.name} collects Palegadu tribute: ${parts.join(", ")}.`);
+    log(s, `${p.name} gains ${parts.join("; ")}.`);
   }
+}
+
+// ---- story events --------------------------------------------------
+
+export function exploreCity(s: GameState, playerId: string): boolean {
+  if (s.phase !== "playing") return false;
+  const p = currentPlayer(s);
+  if (!p || p.id !== playerId) return false;
+  if (s.step !== "action" || s.cityExplored) return false;
+  
+  const sp = SPACES[p.pos];
+  if (sp.t !== "prop" && sp.t !== "route") return false;
+
+  s.cityExplored = true;
+  s.step = "event";
+  const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  s.activeEvent = { id: event.id };
+  log(s, `${p.name} seeks fortune in ${sp.name}...`);
+  return true;
+}
+
+export function resolveEvent(s: GameState, playerId: string, choiceIndex: number): boolean {
+  if (s.phase !== "playing") return false;
+  const p = currentPlayer(s);
+  if (!p || p.id !== playerId) return false;
+  if (s.step !== "event" || !s.activeEvent) return false;
+
+  const event = EVENTS.find((e) => e.id === s.activeEvent!.id);
+  if (!event) return false;
+
+  const choice = event.choices[choiceIndex];
+  if (!choice) return false;
+
+  const roll = Math.random();
+  const success = roll <= choice.riskChance;
+
+  if (success) {
+    applyReward(s, p, choice.successReward);
+    log(s, `${p.name}: ${choice.successText}`);
+  } else {
+    if (choice.failPenalty) {
+      applyReward(s, p, choice.failPenalty);
+    }
+    log(s, `${p.name}: ${choice.failText || "Failure."}`);
+  }
+
+  s.activeEvent = null;
+  s.step = "action";
+  checkVictory(s);
+  return true;
 }
 
 // ---- frontier (Palegallu) ------------------------------------------
@@ -624,6 +683,7 @@ export function endTurn(s: GameState, playerId: string): boolean {
   s.step = "roll";
   s.rolledThisTurn = false;
   s.frontierUsed = false;
+  s.cityExplored = false;
   log(s, `It is now ${currentPlayer(s)?.name}'s turn.`);
   return true;
 }
@@ -688,12 +748,26 @@ export function botPlayTurn(s: GameState): boolean {
     }
   }
 
-  // 4. Use decree occasionally (every other game round)
+  // 4. Try exploring sometimes
+  if (!s.cityExplored && s.step === "action" && Math.random() < 0.4) {
+    if (exploreCity(s, p.id)) {
+      // Pick a random event choice
+      const ev = EVENTS.find((e) => e.id === s.activeEvent?.id);
+      if (ev) {
+        const cidx = Math.floor(Math.random() * ev.choices.length);
+        resolveEvent(s, p.id, cidx);
+      }
+    }
+  }
+
+  // 5. Use decree occasionally (every other game round)
   if (!p.decreeUsed && s.round % 2 === 0 && s.step === "action") {
     useDecree(s, p.id);
   }
 
-  // 5. End turn
-  endTurn(s, p.id);
+  // 6. End turn
+  if (s.step !== "event") {
+    endTurn(s, p.id);
+  }
   return true;
 }

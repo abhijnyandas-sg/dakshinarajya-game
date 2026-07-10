@@ -15,6 +15,10 @@ import { RaniPicker } from "./components/RaniPicker";
 import { CardReveal } from "./components/CardReveal";
 import { DiceRoller } from "./components/DiceRoller";
 import { HowToPlay } from "./components/HowToPlay";
+import { TileDetailCard } from "./components/TileDetailCard";
+import { StoryEventCard } from "./components/StoryEventCard";
+import { IntroSlideshow } from "./components/IntroSlideshow";
+import { EventLogToast } from "./components/EventLogToast";
 import { RANI_ROLEPLAY } from "./flavor";
 
 export default function App() {
@@ -29,6 +33,8 @@ export default function App() {
   const [session] = useState(() => loadSession());
   const [cardPayload, setCardPayload] = useState<CardRevealPayload | null>(null);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showTileDetail, setShowTileDetail] = useState(false);
+  const [hasSeenIntro, setHasSeenIntro] = useState(false);
 
   // Sidebar collapse state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -287,6 +293,13 @@ export default function App() {
     state.step === "action" &&
     onBuyable &&
     (me?.gold ?? 0) >= buyPrice;
+    
+  const canExplore =
+    isMyTurn &&
+    state.step === "action" &&
+    !state.cityExplored &&
+    mySpace &&
+    (mySpace.t === "prop" || mySpace.t === "route");
   const myRani = me?.raniId ? RANI_BY_ID[me.raniId] : null;
   const winner = state.winnerId
     ? state.players.find((p) => p.id === state.winnerId)
@@ -302,9 +315,17 @@ export default function App() {
 
   return (
     <div className="dr-root dr-game-root">
+      {!hasSeenIntro && (
+        <IntroSlideshow 
+          state={state} 
+          onComplete={() => setHasSeenIntro(true)} 
+        />
+      )}
+      
       {toast && <div className="dr-toast">{toast}</div>}
       {showHowToPlay && <HowToPlay onClose={() => setShowHowToPlay(false)} />}
       <CardReveal payload={cardPayload} onDismiss={() => setCardPayload(null)} />
+      <StoryEventCard state={state} onResolve={api.resolveEvent} mySeat={me?.seat ?? -1} />
 
       {/* ── Top strip ─────────────────────────────────────────── */}
       <div className="dr-topbar">
@@ -361,6 +382,7 @@ export default function App() {
       <div className={"dr-game-layout" + (sidebarOpen ? "" : " dr-nosidebar")}>
         {/* Board — dominant */}
         <div className="dr-board-wrap">
+          <EventLogToast log={state.log} />
           {winner && (
             <div className="dr-victory-banner">
               👑 {winner.name} has won — long live the Rani of the South!
@@ -370,8 +392,16 @@ export default function App() {
             state={state}
             selected={selected}
             myPlayerId={playerId}
-            onSelect={setSelected}
+            onSelect={(id) => { setSelected(id); setShowTileDetail(true); }}
           />
+          {showTileDetail && (
+            <TileDetailCard
+              spaceId={selected}
+              state={state}
+              playerId={playerId}
+              onClose={() => setShowTileDetail(false)}
+            />
+          )}
         </div>
 
         {/* Sidebar */}
@@ -424,6 +454,7 @@ export default function App() {
                     <DiceRoller
                       dice={state.dice}
                       disabled={!isMyTurn || state.rolledThisTurn || state.phase !== "playing"}
+                      forcedRolling={state.botIsRolling}
                       onRoll={api.roll}
                     />
                     <div className="dr-action-row">
@@ -441,6 +472,15 @@ export default function App() {
                         id="buy-btn"
                       >
                         {onBuyable ? `🏙 Buy ₹${buyPrice}` : "🏙 Buy"}
+                      </button>
+                      <button
+                        className="dr-btn"
+                        disabled={!canExplore}
+                        title={!canExplore ? "Can only explore once per turn on a city" : "Seek random fortune or misfortune"}
+                        onClick={api.exploreCity}
+                        id="explore-btn"
+                      >
+                        🗺 Explore
                       </button>
                       <button
                         className="dr-btn"

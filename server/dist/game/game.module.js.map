@@ -1,1 +1,0 @@
-{"version":3,"file":"game.module.js","sourceRoot":"","sources":["../../src/game/game.module.ts"],"names":[],"mappings":";;;;;;;;;AAAA,2CAAwC;AACxC,6CAAyC;AACzC,uDAAmD;AACnD,iDAA6C;AAMtC,IAAM,UAAU,GAAhB,MAAM,UAAU;CAAG,CAAA;AAAb,gCAAU;qBAAV,UAAU;IAJtB,IAAA,eAAM,EAAC;QACN,WAAW,EAAE,CAAC,gCAAc,CAAC;QAC7B,SAAS,EAAE,CAAC,sBAAS,EAAE,0BAAW,CAAC;KACpC,CAAC;GACW,UAAU,CAAG"}

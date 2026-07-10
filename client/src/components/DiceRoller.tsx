@@ -18,13 +18,19 @@ function DieFace({ value, rolling }: { value: number; rolling: boolean }) {
       aria-label={`Die showing ${value}`}
     >
       <svg viewBox="0 0 100 100" width="100%" height="100%">
-        {/* Die body */}
-        <rect x="4" y="4" width="92" height="92" rx="18" fill="#FAF1D6" stroke="#7B5C10" strokeWidth="2.5" />
-        {/* Subtle inner shadow */}
-        <rect x="8" y="8" width="84" height="84" rx="14" fill="none" stroke="#C9B27A" strokeWidth="1" opacity="0.5" />
+        {/* Die body with premium shadow */}
+        <defs>
+          <linearGradient id="dieFaceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFF8E8" />
+            <stop offset="100%" stopColor="#E8D4A0" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="92" height="92" rx="18" fill="url(#dieFaceGrad)" stroke="#7B5C10" strokeWidth="2.5" />
+        {/* Inner highlight edge */}
+        <rect x="8" y="8" width="84" height="84" rx="14" fill="none" stroke="#FFF" strokeWidth="1" opacity="0.4" />
         {/* Dots */}
         {dots.map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="7" fill="#2A1610" />
+          <circle key={i} cx={cx} cy={cy} r="7.5" fill="#2A1610" />
         ))}
       </svg>
     </div>
@@ -34,10 +40,12 @@ function DieFace({ value, rolling }: { value: number; rolling: boolean }) {
 export function DiceRoller({
   dice,
   disabled,
+  forcedRolling,
   onRoll,
 }: {
   dice: [number, number];
   disabled: boolean;
+  forcedRolling?: boolean;
   onRoll: () => void;
 }) {
   const [rolling, setRolling] = useState(false);
@@ -45,25 +53,45 @@ export function DiceRoller({
 
   // When real dice change after animation, update display
   useEffect(() => {
-    if (!rolling) setDisplay(dice);
-  }, [dice, rolling]);
+    if (!rolling && !forcedRolling) setDisplay(dice);
+  }, [dice, rolling, forcedRolling]);
+
+  // Handle external AI rolling state
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (forcedRolling) {
+      interval = setInterval(() => {
+        setDisplay([
+          (Math.floor(Math.random() * 6) + 1) as 1,
+          (Math.floor(Math.random() * 6) + 1) as 1,
+        ]);
+      }, 75);
+    }
+    return () => clearInterval(interval);
+  }, [forcedRolling]);
 
   function handleRoll() {
     if (disabled || rolling) return;
     setRolling(true);
-    // Shuffle display values during animation
+    // ~2 second longer animation: start fast, slow down at the end
     let frame = 0;
-    const interval = setInterval(() => {
+    const totalFrames = 24; // More frames = longer animation
+    const tick = () => {
       setDisplay([
         (Math.floor(Math.random() * 6) + 1) as 1,
         (Math.floor(Math.random() * 6) + 1) as 1,
       ]);
       frame++;
-      if (frame >= 8) {
-        clearInterval(interval);
+      if (frame >= totalFrames) {
         setRolling(false);
+        return;
       }
-    }, 75);
+      // Ease-out: start fast (60ms), slow down to 200ms near the end
+      const progress = frame / totalFrames;
+      const delay = 60 + Math.floor(progress * progress * 160);
+      setTimeout(tick, delay);
+    };
+    tick();
     onRoll();
   }
 
@@ -73,18 +101,19 @@ export function DiceRoller({
         <DieFace value={display[0]} rolling={rolling} />
         <DieFace value={display[1]} rolling={rolling} />
       </div>
-      {!rolling && dice[0] > 0 && (
+      {(rolling || forcedRolling) && <div className="dr-dice-rolling-label">🎲 Rolling…</div>}
+      {!(rolling || forcedRolling) && dice[0] > 0 && (
         <div className="dr-dice-total">
           {dice[0] + dice[1]}
         </div>
       )}
       <button
         className="dr-btn primary dr-roll-btn"
-        disabled={disabled || rolling}
+        disabled={disabled || rolling || forcedRolling}
         onClick={handleRoll}
         id="roll-btn"
       >
-        {rolling ? "Rolling…" : "Roll Dice"}
+        {rolling || forcedRolling ? "🎲 Rolling…" : "🎲 Roll Dice"}
       </button>
     </div>
   );

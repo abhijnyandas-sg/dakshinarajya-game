@@ -116,7 +116,7 @@ export interface Player {
 }
 
 export type Phase = "lobby" | "playing" | "ended";
-export type TurnStep = "roll" | "action";
+export type TurnStep = "roll" | "action" | "event";
 
 export interface LogEntry {
   t: number;
@@ -144,7 +144,10 @@ export interface GameState {
   step: TurnStep;
   dice: [number, number];
   rolledThisTurn: boolean;
+  botIsRolling?: boolean;
   frontierUsed: boolean; // one frontier attempt per turn
+  cityExplored: boolean; // one city explore per turn
+  activeEvent: { id: string } | null;
   villages: Record<string, string | null>; // palegadu id -> owner id | null
   log: LogEntry[];
   winnerId: string | null;
